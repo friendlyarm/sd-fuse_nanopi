@@ -1,0 +1,2 @@
+get rootfs.tgz: 
+cat x*>rootfs.tgz

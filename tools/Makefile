@@ -8,7 +8,7 @@
 CC		= gcc
 RM		= rm
 
-CFLAGS	= -Wall -O2
+CFLAGS	= -Wall -O2 -static
 
 TARGET	= sd_fdisk
 

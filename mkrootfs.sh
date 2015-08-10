@@ -70,6 +70,10 @@ FA_DoExec mkfs.vfat -F 32 /dev/${DEV_NAME}1 -n FRIENDLYARM
 # ext4: rootfs
 FA_DoExec mkfs.ext4 /dev/${DEV_NAME}2 -L NANOPI
 
+if [ ! -f ${rootfspkg} ]; then
+	(cd ./prebuilt/rootfs-split/; cat x*>../rootfs.tgz)
+fi
+
 if [ -f ${rootfspkg} ]; then
 	FA_DoExec mount -t ext4 /dev/${DEV_NAME}2 ${MNT}
 	FA_DoExec tar xzf ${rootfspkg} -C ${MNT} --strip-components=1

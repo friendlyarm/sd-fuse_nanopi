@@ -17,6 +17,7 @@
 #
 
 /mnt
+/prebuilt/rootfs.tgz
 
 #
 # Generated files
