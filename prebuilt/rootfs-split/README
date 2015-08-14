@@ -1,2 +1,6 @@
 get rootfs.tgz: 
 cat x*>rootfs.tgz
+
+split:
+cd rootfs-split
+split -d -b 40m ../rootfs.tgz

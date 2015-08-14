@@ -262,12 +262,19 @@ int main(int argc, char *argv[])
 		make_partitionInfo(block_start, block_offset, sdInfo, &partInfo[0]);
 
 		block_start += block_offset;
+		partInfo[2].bootable	= 0x00;
+		partInfo[2].partitionId	= 0x82;
+		block_offset = calc_unit(_100MB * 4, sdInfo);
+		make_partitionInfo(block_start, block_offset, sdInfo, &partInfo[2]);
+
+		block_start += block_offset;
 		partInfo[1].bootable	= 0x00;
 		partInfo[1].partitionId	= 0x83;
 		make_partitionInfo(block_start, BLOCK_END, sdInfo, &partInfo[1]);
 
 		encode_partitionInfo(partInfo[0], &mbr[0x1BE]);
 		encode_partitionInfo(partInfo[1], &mbr[0x1CE]);
+		encode_partitionInfo(partInfo[2], &mbr[0x1DE]);
 
 	} else if (part_android) {
 		printf("Making partition table: Android\n");

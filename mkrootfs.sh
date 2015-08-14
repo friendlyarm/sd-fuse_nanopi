@@ -55,6 +55,7 @@ FA_DoExec() {
 # make fs and copy files
 
 rootfspkg=./prebuilt/rootfs.tgz
+vendorpatch=./vendor/rootfs-patch.tgz
 MNT=mnt
 
 echo "Making rootfs for NanoPi on $1..."
@@ -67,6 +68,9 @@ umount /dev/${DEV_NAME}? >/dev/null 2>&1
 # vfat:
 FA_DoExec mkfs.vfat -F 32 /dev/${DEV_NAME}1 -n FRIENDLYARM
 
+# swap:
+FA_DoExec mkswap /dev/${DEV_NAME}3 -L SWAP
+
 # ext4: rootfs
 FA_DoExec mkfs.ext4 /dev/${DEV_NAME}2 -L NANOPI
 
@@ -77,6 +81,9 @@ fi
 if [ -f ${rootfspkg} ]; then
 	FA_DoExec mount -t ext4 /dev/${DEV_NAME}2 ${MNT}
 	FA_DoExec tar xzf ${rootfspkg} -C ${MNT} --strip-components=1
+	if [ -f ${vendorpatch} ]; then
+		FA_DoExec tar xzf ${vendorpatch} -C ${MNT} --strip-components=1
+	fi
 	FA_DoExec umount ${MNT}
 fi
 
