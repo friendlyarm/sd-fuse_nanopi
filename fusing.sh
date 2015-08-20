@@ -37,7 +37,7 @@ SD_FDISK=./prebuilt/sd_fdisk_deb
 # Checking device for fusing
 
 if [ -z $1 ]; then
-	echo "Usage: ./hc_fusing.sh <SD Reader's device file>"
+	echo "Usage: $0 DEVICE [ sd | sdhc ]"
 	exit 0
 fi
 

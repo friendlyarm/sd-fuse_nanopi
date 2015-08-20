@@ -21,7 +21,7 @@
 # Checking device for fusing
 
 if [ -z $1 ]; then
-	echo "Usage: ./readenv.sh <SD Reader's device file>"
+	echo "Usage: $0 DEVICE [ sd | sdhc ]"
 	exit 0
 fi
 

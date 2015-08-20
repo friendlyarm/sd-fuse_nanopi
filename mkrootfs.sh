@@ -21,7 +21,7 @@
 # Checking device for fusing
 
 if [ -z $1 ]; then
-	echo "Usage: ./mkrootfs.sh <SD Reader's device file>"
+	echo "Usage: $0 DEVICE"
 	exit 0
 fi
 
