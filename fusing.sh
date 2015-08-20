@@ -17,10 +17,11 @@
 # along with this program; if not, you can access it online at
 # http://www.gnu.org/licenses/gpl-2.0.html.
 
-# Make sure only root can run our script
-if [ "$(id -u)" != "0" ]; then
-   echo "This script must be run as root" 1>&2
-   exit 1
+# Automatically re-run script under sudo if not root
+if [ $(id -u) -ne 0 ]; then
+  echo "Rerunning script under sudo..."
+  sudo "$0" "$@"
+  exit
 fi
 
 # ----------------------------------------------------------
