@@ -39,7 +39,7 @@ if [ ${BLOCK_CNT} -le 0 ]; then
 	exit 1
 fi
 
-if [ ${BLOCK_CNT} -gt 64000000 ]; then
+if [ ${BLOCK_CNT} -gt 134217727 ]; then
 	echo "Error: $1 size (${BLOCK_CNT}) is too large"
 	exit 1
 fi
