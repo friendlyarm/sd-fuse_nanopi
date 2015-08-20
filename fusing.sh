@@ -41,7 +41,7 @@ if [ -z $1 ]; then
 fi
 
 case $1 in
-/dev/sd[bcde] | /dev/loop0)
+/dev/sd[a-z] | /dev/loop0)
 	DEV_NAME=`basename $1`
 	BLOCK_CNT=`cat /sys/block/${DEV_NAME}/size`;;
 *)
