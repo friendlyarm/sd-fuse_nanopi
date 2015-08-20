@@ -21,7 +21,7 @@
 # Checking device for fusing
 
 if [ -z $1 ]; then
-	echo "Usage: $0 DEVICE [ sd | sdhc ]"
+	echo "Usage: $0 DEVICE [sd]"
 	exit 0
 fi
 
@@ -44,11 +44,11 @@ if [ ${BLOCK_CNT} -gt 134217727 ]; then
 	exit 1
 fi
 
-if [ "sd$2" = "sdsd" ]; then
+if [ "sd$2" = "sdsd" -o ${BLOCK_CNT} -le 4194303 ]; then
 	echo "Card type: SD"
 	RSD_BLKCOUNT=0
 else
-	echo "Card type: SDHC (default)"
+	echo "Card type: SDHC"
 	RSD_BLKCOUNT=1024
 fi
 
