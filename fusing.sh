@@ -93,47 +93,32 @@ rm sd_mbr.dat
 # Create a u-boot binary for movinand/mmc boot
 
 # padding to 256k u-boot
-cat ${UBOOT_BIN} >> u-boot-2x.bin
-cat ${UBOOT_BIN} >> u-boot-2x.bin
-split -d -a 1 -b 256k u-boot-2x.bin u-boot-256k.bin
-
-# make BL1 u-boot (8kb)
-split -d -a 2 -b 8k ${UBOOT_BIN} u-boot-8k.bin
-
-# concat the BL1 behind of padded 256k binary
-cat u-boot-8k.bin00 >> u-boot-256k.bin0
-
-# rename and chmod
-mv u-boot-256k.bin0 u-boot-movi.bin
-chmod 777 u-boot-movi.bin
-
-# remove temp files
-rm -f u-boot-8k*
-rm -f u-boot-256k*
-rm -f u-boot-2x.bin
-
+dd if=/dev/zero bs=1k count=256 status=none | tr "\000" "\377" > u-boot-256k.bin
+dd if=${UBOOT_BIN} of=u-boot-256k.bin conv=notrunc status=none
 
 # ----------------------------------------------------------
-# Fusing uboot, kernel to SDHC card
+# Fusing uboot, kernel to card
 
 echo "---------------------------------"
 echo "BL2 fusing"
-dd if=u-boot-movi.bin of=/dev/${DEV_NAME} bs=512 seek=${BL2_POSITION} count=512
-rm -f u-boot-movi.bin
+dd if=u-boot-256k.bin of=/dev/${DEV_NAME} bs=512 seek=${BL2_POSITION} count=512
 
 echo "---------------------------------"
 echo "BL1 fusing"
-dd if=${UBOOT_BIN}    of=/dev/${DEV_NAME} bs=512 seek=${BL1_POSITION} count=16
+dd if=u-boot-256k.bin of=/dev/${DEV_NAME} bs=512 seek=${BL1_POSITION} count=16
+
+# remove generated files
+rm u-boot-256k.bin
 
 if [ -f ${ENV_FILE} ]; then
   echo "---------------------------------"
   echo "ENV fusing"
-  dd if=${ENV_FILE}   of=/dev/${DEV_NAME} bs=512 seek=${ENV_POSITION} count=32
+  dd if=${ENV_FILE} of=/dev/${DEV_NAME} bs=512 seek=${ENV_POSITION} count=32
 fi
 
 echo "---------------------------------"
 echo "zImage fusing"
-dd if=${KERNELIMG}    of=/dev/${DEV_NAME} bs=512 seek=${KERNEL_POSITION}
+dd if=${KERNELIMG} of=/dev/${DEV_NAME} bs=512 seek=${KERNEL_POSITION}
 
 sync
 
