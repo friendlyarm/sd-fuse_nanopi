@@ -43,6 +43,10 @@ fi
 
 case $1 in
 /dev/sd[a-z] | /dev/loop0)
+	if [ ! -e $1 ]; then
+		echo "Error: $1 does not exist."
+		exit 1
+	fi
 	DEV_NAME=`basename $1`
 	BLOCK_CNT=`cat /sys/block/${DEV_NAME}/size`;;
 *)
@@ -50,7 +54,7 @@ case $1 in
 	exit 0
 esac
 
-if [ ${BLOCK_CNT} -le 0 ]; then
+if [ -z ${BLOCK_CNT} -o ${BLOCK_CNT} -le 0 ]; then
 	echo "Error: $1 is inaccessible. Stop fusing now!"
 	exit 1
 fi
