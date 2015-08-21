@@ -24,14 +24,21 @@ if [ $(id -u) -ne 0 ]; then
   exit
 fi
 
+try() {
+	output=$("$@" 2>&1)
+	if [ $? -ne 0 ]; then
+		echo "error running \"$@\""
+		echo "$output"
+		exit 1
+	fi
+}
+
 # ----------------------------------------------------------
 # Prebuilt images and host tool
 
 UBOOT_BIN=./prebuilt/u-boot.bin
 KERNELIMG=./prebuilt/zImage
 ENV_FILE=./prebuilt/sdenv.raw
-
-SD_FDISK=./prebuilt/sd_fdisk_deb
 
 # ----------------------------------------------------------
 # Checking device for fusing
@@ -77,12 +84,52 @@ ENV_SIZE=32
 BL2_SIZE=512
 KERNEL_SIZE=12288
 
+DEBUG_PRINT=0
+USE_SWAP=1
+FAT_POSITION=2048
+FAT_SIZE=250000
+SWAP_SIZE=262144
+
 let BL1_POSITION=${BLOCK_CNT}-${BL1_OFFSET}-${BL1_SIZE}-2
 let ENV_POSITION=${BL1_POSITION}-${ENV_SIZE}
 let BL2_POSITION=${ENV_POSITION}-${BL2_SIZE}
 let KERNEL_POSITION=${BL2_POSITION}-${KERNEL_SIZE}
 #echo ${KERNEL_POSITION}
 
+let EXT4_POSITION=${FAT_POSITION}+${FAT_SIZE}
+let EXT4_SIZE=${KERNEL_POSITION}-${FAT_POSITION}-${FAT_SIZE}
+
+if [ ${USE_SWAP} -eq 1 ]; then
+	let EXT4_SIZE=${EXT4_SIZE}-${SWAP_SIZE}
+	let SWAP_POSITION=${EXT4_POSITION}+${EXT4_SIZE}
+fi
+
+if [ ${DEBUG_PRINT} -eq 1 ]; then
+	let FAT_END=${FAT_POSITION}+${FAT_SIZE}
+	let EXT4_END=${EXT4_POSITION}+${EXT4_SIZE}
+	let SWAP_END=${SWAP_POSITION}+${SWAP_SIZE}
+	let KERNEL_END=${KERNEL_POSITION}+${KERNEL_SIZE}
+	let BL2_END=${BL2_POSITION}+${BL2_SIZE}
+	let ENV_END=${ENV_POSITION}+${ENV_SIZE}
+	let BL1_END=${BL1_POSITION}+${BL1_SIZE}
+
+	echo
+	printf "%8s %9s %9s %8s\n" "" SIZE START END
+	echo "--------------------------------------"
+	printf "%8s %9d %9d %9d\n" FAT: ${FAT_SIZE} ${FAT_POSITION} ${FAT_END}
+	printf "%8s %9d %9d %9d\n" EXT4: ${EXT4_SIZE} ${EXT4_POSITION} ${EXT4_END}
+	if [ ${USE_SWAP} ]; then
+		printf "%8s %9d %9d %9d\n" SWAP: ${SWAP_SIZE} ${SWAP_POSITION} ${SWAP_END}
+	fi
+	printf "%8s %9d %9d %9d\n" KERNEL: ${KERNEL_SIZE} ${KERNEL_POSITION} ${KERNEL_END}
+	printf "%8s %9d %9d %9d\n" BL2: ${BL2_SIZE} ${BL2_POSITION} ${BL2_END}
+	printf "%8s %9d %9d %9d\n" ENV: ${ENV_SIZE} ${ENV_POSITION} ${ENV_END}
+	printf "%8s %9d %9d %9d\n" BL1: ${BL1_SIZE} ${BL1_POSITION} ${BL1_END}
+	echo "--------------------------------------"
+	printf "%-28s %9d\n" "TOTAL BLOCKS" ${BLOCK_CNT}
+	echo "--------------------------------------"
+	echo
+fi
 
 # ----------------------------------------------------------
 # partition card
@@ -93,17 +140,25 @@ echo "make $1 partition"
 # umount all at first
 umount /dev/${DEV_NAME}* > /dev/null 2>&1
 
-${SD_FDISK} $1
-dd iflag=dsync oflag=dsync if=sd_mbr.dat of=$1
-rm sd_mbr.dat
-
+if [ ${USE_SWAP} ]; then
+	try sfdisk -u S -f --Linux /dev/${DEV_NAME} << EOF
+${FAT_POSITION},${FAT_SIZE},0x0C,-
+${EXT4_POSITION},${EXT4_SIZE},0x83,-
+${SWAP_POSITION},${SWAP_SIZE},0x82,-
+EOF
+else
+	try sfdisk -u S -f --Linux /dev/${DEV_NAME} << EOF
+${FAT_POSITION},${FAT_SIZE},0x0C,-
+${EXT4_POSITION},${EXT4_SIZE},0x83,-
+EOF
+fi
 
 # ----------------------------------------------------------
 # Create a u-boot binary for movinand/mmc boot
 
 # padding to 256k u-boot
-dd if=/dev/zero bs=1k count=256 status=none | tr "\000" "\377" > u-boot-256k.bin
-dd if=${UBOOT_BIN} of=u-boot-256k.bin conv=notrunc status=none
+dd if=/dev/zero bs=1k count=256 2> /dev/null | tr "\000" "\377" > u-boot-256k.bin
+dd if=${UBOOT_BIN} of=u-boot-256k.bin conv=notrunc 2> /dev/null
 
 # ----------------------------------------------------------
 # Fusing uboot, kernel to card
