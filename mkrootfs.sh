@@ -68,8 +68,10 @@ umount /dev/${DEV_NAME}? >/dev/null 2>&1
 # vfat:
 FA_DoExec mkfs.vfat -F 32 /dev/${DEV_NAME}1 -n FRIENDLYARM
 
-# swap:
-FA_DoExec mkswap /dev/${DEV_NAME}3 -L SWAP
+# optional swap:
+if [ -b /dev/${DEV_NAME}3 ]; then
+	FA_DoExec mkswap /dev/${DEV_NAME}3 -L SWAP
+fi
 
 # ext4: rootfs
 FA_DoExec mkfs.ext4 /dev/${DEV_NAME}2 -L NANOPI
@@ -83,6 +85,9 @@ if [ -f ${rootfspkg} ]; then
 	FA_DoExec tar xzf ${rootfspkg} -C ${MNT} --strip-components=1
 	if [ -f ${vendorpatch} ]; then
 		FA_DoExec tar xzf ${vendorpatch} -C ${MNT} --strip-components=1
+	fi
+	if [ -b /dev/${DEV_NAME}3 ]; then
+		echo "/dev/mmcblk0p3 none swap sw 0 0" >> ${MNT}/etc/fstab
 	fi
 	FA_DoExec umount ${MNT}
 fi
