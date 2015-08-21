@@ -140,13 +140,16 @@ sync
 #<Message Display>
 echo "---------------------------------"
 echo "U-boot and kernel image is fused successfully."
-# echo "Please detach $1"
-sleep 2
+
+sync
+
 partprobe /dev/${DEV_NAME}
 if [ $? -ne 0 ]; then
     echo "Re-read the partition table failed."
     exit 1
 fi
+
+sleep 1
 
 ./mkrootfs.sh /dev/${DEV_NAME}
 
