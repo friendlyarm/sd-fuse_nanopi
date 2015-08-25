@@ -21,12 +21,12 @@
 # Checking device for fusing
 
 if [ -z $1 ]; then
-	echo "Usage: ./readenv.sh <SD Reader's device file>"
+	echo "Usage: $0 DEVICE [sd]"
 	exit 0
 fi
 
 case $1 in
-/dev/sd[bcde] | /dev/loop0)
+/dev/sd[a-z] | /dev/loop0)
 	DEV_NAME=`basename $1`
 	BLOCK_CNT=`cat /sys/block/${DEV_NAME}/size`;;
 *)
@@ -39,16 +39,16 @@ if [ ${BLOCK_CNT} -le 0 ]; then
 	exit 1
 fi
 
-if [ ${BLOCK_CNT} -gt 16000000 ]; then
+if [ ${BLOCK_CNT} -gt 134217727 ]; then
 	echo "Error: $1 size (${BLOCK_CNT}) is too large"
 	exit 1
 fi
 
-if [ "sd$2" = "sdsd" ]; then
+if [ "sd$2" = "sdsd" -o ${BLOCK_CNT} -le 4194303 ]; then
 	echo "Card type: SD"
 	RSD_BLKCOUNT=0
 else
-	echo "Card type: SDHC (default)"
+	echo "Card type: SDHC"
 	RSD_BLKCOUNT=1024
 fi
 

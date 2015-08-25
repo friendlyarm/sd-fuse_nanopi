@@ -21,12 +21,12 @@
 # Checking device for fusing
 
 if [ -z $1 ]; then
-	echo "Usage: ./mkrootfs.sh <SD Reader's device file>"
+	echo "Usage: $0 DEVICE"
 	exit 0
 fi
 
 case $1 in
-/dev/sd[bcde] | /dev/loop0)
+/dev/sd[a-z] | /dev/loop0)
 	DEV_NAME=`basename $1`
 	BLOCK_CNT=`cat /sys/block/${DEV_NAME}/size`;;
 *)
@@ -39,7 +39,7 @@ if [ ${BLOCK_CNT} -le 0 ]; then
 	exit 1
 fi
 
-if [ ${BLOCK_CNT} -gt 64000000 ]; then
+if [ ${BLOCK_CNT} -gt 134217727 ]; then
 	echo "Error: $1 size (${BLOCK_CNT}) is too large"
 	exit 1
 fi
@@ -68,8 +68,10 @@ umount /dev/${DEV_NAME}? >/dev/null 2>&1
 # vfat:
 FA_DoExec mkfs.vfat -F 32 /dev/${DEV_NAME}1 -n FRIENDLYARM
 
-# swap:
-FA_DoExec mkswap /dev/${DEV_NAME}3 -L SWAP
+# optional swap:
+if [ -b /dev/${DEV_NAME}3 ]; then
+	FA_DoExec mkswap /dev/${DEV_NAME}3 -L SWAP
+fi
 
 # ext4: rootfs
 FA_DoExec mkfs.ext4 /dev/${DEV_NAME}2 -L NANOPI
