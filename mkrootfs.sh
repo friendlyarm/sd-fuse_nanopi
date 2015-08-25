@@ -86,6 +86,9 @@ if [ -f ${rootfspkg} ]; then
 	if [ -f ${vendorpatch} ]; then
 		FA_DoExec tar xzf ${vendorpatch} -C ${MNT} --strip-components=1
 	fi
+	if [ -b /dev/${DEV_NAME}3 ]; then
+		echo "/dev/mmcblk0p3 none swap sw 0 0" >> ${MNT}/etc/fstab
+	fi
 	FA_DoExec umount ${MNT}
 fi
 
