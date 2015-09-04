@@ -96,7 +96,13 @@ devpts /dev/pts devpts gid=5,mode=620 0 0
 EOF
 
 echo "Copying kernel..."
-try cp prebuilt/zImage rootfs/boot
+cp prebuilt/zImage rootfs/boot
+
+cat > rootfs/boot/firstboot.txt << EOF
+EXPAND_ROOTFS=1
+MAKE_SWAP=1
+SWAP_SIZE=128
+EOF
 
 echo "Cleaning up..."
 cleanup
