@@ -3,7 +3,7 @@
 rootfspkg=prebuilt/rootfs.tgz
 vendorpatch=vendor/rootfs-patch.tgz
 IMAGE_FILE=nanopi.img
-IMAGE_SIZE_MB=500
+IMAGE_SIZE_MB=800
 FAT_SIZE_MB=128
 
 if [ ! -f ${rootfspkg} ]; then
@@ -30,14 +30,16 @@ LOOP_DEVICE=$(losetup -f)
 STAGE=0
 
 cleanup() {
-    if [ ${STAGE} -ge 4 ]; then
-        umount rootfs/boot
-    fi
+    sync
     if [ ${STAGE} -ge 3 ]; then
-        umount rootfs
+        umount ${PART_DEVICE}p?
         rmdir rootfs
     fi
     if [ ${STAGE} -ge 2 ]; then
+        if [ ${USE_KPARTX} -ne 0 ]; then
+            sleep 1
+            kpartx -d ${LOOP_DEVICE}
+        fi
         losetup --detach ${LOOP_DEVICE}
     fi
 }
@@ -64,22 +66,42 @@ ${FAT_POSITION},${FAT_SIZE},0x0C,-
 ${EXT4_POSITION},${EXT4_SIZE},0x83,-
 EOF
 
-try losetup -P ${LOOP_DEVICE} ${IMAGE_FILE}
+if losetup -P ${LOOP_DEVICE} ${IMAGE_FILE} 2>/dev/null; then
+    USE_KPARTX=0
+    PART_DEVICE=${LOOP_DEVICE}
+elif losetup ${LOOP_DEVICE} ${IMAGE_FILE}; then
+    kpartx -a ${LOOP_DEVICE}
+    USE_KPARTX=1
+    PART_DEVICE=/dev/mapper/`basename ${LOOP_DEVICE}`
+    sleep 1
+else
+    echo "Error: attach ${LOOP_DEVICE} failed, stop now."
+    rm ${IMAGE_FILE}
+    exit 1
+fi
+[ -b ${PART_DEVICE}p2 ] || {
+    echo "Error: ${PART_DEVICE}p2 not exist, stop now."
+    kpartx -d ${LOOP_DEVICE}
+    losetup --detach ${LOOP_DEVICE}
+    rm ${IMAGE_FILE}
+    exit 1
+}
+
 STAGE=2
 
 echo "Creating filesystems..."
-try mkfs -t vfat ${LOOP_DEVICE}p1
-try mkfs -t ext4 ${LOOP_DEVICE}p2
+try mkfs -t vfat ${PART_DEVICE}p1
+try mkfs -t ext4 ${PART_DEVICE}p2
 
-try tune2fs -o journal_data_writeback ${LOOP_DEVICE}p2
-try tune2fs -O ^has_journal ${LOOP_DEVICE}p2
+try tune2fs -o journal_data_writeback ${PART_DEVICE}p2
+try tune2fs -O ^has_journal ${PART_DEVICE}p2
 
 try mkdir -p rootfs
-try mount -t ext4 ${LOOP_DEVICE}p2 rootfs
+try mount -t ext4 ${PART_DEVICE}p2 rootfs
 STAGE=3
 
 try mkdir -p rootfs/boot
-try mount -t vfat ${LOOP_DEVICE}p1 rootfs/boot
+try mount -t vfat ${PART_DEVICE}p1 rootfs/boot
 STAGE=4
 
 echo "Extracting rootfs..."
