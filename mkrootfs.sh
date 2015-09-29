@@ -54,7 +54,7 @@ FA_DoExec() {
 #----------------------------------------------------------
 # make fs and copy files
 
-rootfspkg=./prebuilt/rootfs.tgz
+rootfspkg=./prebuilt/nanopi-debian-jessie-rootfs.tgz
 vendorpatch=./vendor/rootfs-patch.tgz
 MNT=mnt
 
@@ -77,7 +77,27 @@ fi
 FA_DoExec mkfs.ext4 /dev/${DEV_NAME}2 -L NANOPI
 
 if [ ! -f ${rootfspkg} ]; then
-	(cd ./prebuilt/rootfs-split/; cat x*>../rootfs.tgz)
+	# download rootfs
+	cd /tmp/
+	rm -f nanopi-debian-jessie-rootfs.tgz
+	wget http://112.124.9.243/dvdfiles/NanoPi/nanopi-debian-jessie-rootfs.tgz
+	if [[ "$?" != 0 ]]; then
+	    echo "Error downloading file: nanopi-debian-jessie-rootfs.tgz"
+	    exit 1
+	fi
+	rm -f nanopi-debian-jessie-rootfs.tgz.hash.md5
+	wget http://112.124.9.243/dvdfiles/NanoPi/nanopi-debian-jessie-rootfs.tgz.hash.md5
+	if [[ "$?" != 0 ]]; then
+	    echo "Error downloading file: nanopi-debian-jessie-rootfs.tgz.hash.md5."
+	    exit 1
+	fi
+	md5sum -c nanopi-debian-jessie-rootfs.tgz.hash.md5
+	if [[ "$?" != 0 ]]; then
+	    echo "Incorrect MD5 please restart the program and try again."
+	    exit 1
+	fi
+	cd -
+	mv /tmp/nanopi-debian-jessie-rootfs.tgz ./prebuilt/
 fi
 
 if [ -f ${rootfspkg} ]; then

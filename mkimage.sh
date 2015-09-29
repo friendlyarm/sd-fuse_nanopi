@@ -1,13 +1,33 @@
 #!/bin/bash
 
-rootfspkg=prebuilt/rootfs.tgz
+rootfspkg=prebuilt/nanopi-debian-jessie-rootfs.tgz
 vendorpatch=vendor/rootfs-patch.tgz
 IMAGE_FILE=nanopi.img
 IMAGE_SIZE_MB=800
 FAT_SIZE_MB=128
 
 if [ ! -f ${rootfspkg} ]; then
-    cat prebuilt/rootfs-split/x* > ${rootfspkg}
+    # download rootfs
+    cd /tmp/
+    rm -f nanopi-debian-jessie-rootfs.tgz
+    wget http://112.124.9.243/dvdfiles/NanoPi/nanopi-debian-jessie-rootfs.tgz
+    if [[ "$?" != 0 ]]; then
+        echo "Error downloading file: nanopi-debian-jessie-rootfs.tgz"
+        exit 1
+    fi
+    rm -f nanopi-debian-jessie-rootfs.tgz.hash.md5
+    wget http://112.124.9.243/dvdfiles/NanoPi/nanopi-debian-jessie-rootfs.tgz.hash.md5
+    if [[ "$?" != 0 ]]; then
+        echo "Error downloading file: nanopi-debian-jessie-rootfs.tgz.hash.md5."
+        exit 1
+    fi
+    md5sum -c nanopi-debian-jessie-rootfs.tgz.hash.md5
+    if [[ "$?" != 0 ]]; then
+        echo "Incorrect MD5 please restart the program and try again."
+        exit 1
+    fi
+    cd -
+    mv /tmp/nanopi-debian-jessie-rootfs.tgz ./prebuilt/
 fi
 
 touch ${IMAGE_FILE}
@@ -105,7 +125,7 @@ try mount -t vfat ${PART_DEVICE}p1 rootfs/boot
 STAGE=4
 
 echo "Extracting rootfs..."
-try tar -zxf prebuilt/rootfs.tgz -C rootfs --strip-components=1
+try tar -zxf prebuilt/nanopi-debian-jessie-rootfs.tgz -C rootfs --strip-components=1
 
 if [ -f ${vendorpatch} ]; then
     try tar -zxf ${vendorpatch} -C rootfs --strip-components=1

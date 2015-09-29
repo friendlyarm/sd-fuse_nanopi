@@ -18,6 +18,7 @@
 
 /mnt
 /prebuilt/rootfs.tgz
+/prebuilt/nanopi-debian-jessie-rootfs.tgz
 /vendor
 
 #
