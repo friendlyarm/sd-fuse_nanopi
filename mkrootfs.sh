@@ -80,13 +80,13 @@ if [ ! -f ${rootfspkg} ]; then
 	# download rootfs
 	cd /tmp/
 	rm -f nanopi-debian-jessie-rootfs.tgz
-	wget http://112.124.9.243/dvdfiles/NanoPi/nanopi-debian-jessie-rootfs.tgz
+	wget  http://wiki.friendlyarm.com/NanoPi/download/nanopi-debian-jessie-rootfs.tgz
 	if [[ "$?" != 0 ]]; then
 	    echo "Error downloading file: nanopi-debian-jessie-rootfs.tgz"
 	    exit 1
 	fi
 	rm -f nanopi-debian-jessie-rootfs.tgz.hash.md5
-	wget http://112.124.9.243/dvdfiles/NanoPi/nanopi-debian-jessie-rootfs.tgz.hash.md5
+	wget  http://wiki.friendlyarm.com/NanoPi/download/nanopi-debian-jessie-rootfs.tgz.hash.md5
 	if [[ "$?" != 0 ]]; then
 	    echo "Error downloading file: nanopi-debian-jessie-rootfs.tgz.hash.md5."
 	    exit 1
